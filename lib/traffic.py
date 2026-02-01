@@ -538,6 +538,707 @@ ISSUE_DESCRIPTIONS = {
 }
 
 
+# =============================================================================
+# MALWARE BEHAVIOR SIMULATION (Educational/Testing Purposes)
+# =============================================================================
+#
+# WARNING: This module simulates malware-like network patterns for:
+# - Security training and education
+# - Honeypot and deception technology testing
+# - IDS/IPS detection rule validation
+# - Incident response training
+# - CTF challenges
+#
+# All traffic goes to safe/controlled endpoints. No actual malicious
+# payloads are delivered or executed.
+# =============================================================================
+
+
+class MalwareType(Enum):
+    """
+    9 types of malware-like behavior patterns for educational simulation.
+
+    These simulate the NETWORK PATTERNS of malware, not actual malware.
+    Useful for testing detection systems and security training.
+    """
+    C2_BEACON = "c2_beacon"              # Command & Control beaconing
+    DATA_EXFIL = "data_exfil"            # Data exfiltration patterns
+    CRYPTOMINER = "cryptominer"          # Cryptocurrency mining traffic
+    RANSOMWARE = "ransomware"            # Ransomware-like behavior
+    BOTNET = "botnet"                    # Botnet communication
+    KEYLOGGER = "keylogger"              # Keylogger/spyware uploads
+    TROJAN_DL = "trojan_downloader"      # Trojan downloader patterns
+    WORM_SCAN = "worm_scan"              # Worm propagation scanning
+    ADWARE = "adware"                    # Adware/PUP traffic
+
+
+@dataclass
+class MalwareEvent:
+    """A simulated malware traffic event."""
+    timestamp: datetime
+    malware_type: MalwareType
+    target: str
+    details: Dict
+    ioc_indicators: List[str]  # Indicators of Compromise for training
+
+
+# Simulated malicious infrastructure (all safe/non-existent targets)
+MALWARE_TARGETS = {
+    'c2_domains': [
+        "update-service-{rand}.xyz",
+        "cdn-static-{rand}.top",
+        "api-gateway-{rand}.cc",
+        "cloud-sync-{rand}.ru",
+        "secure-portal-{rand}.cn",
+    ],
+    'exfil_endpoints': [
+        "https://httpbin.org/post",  # Safe endpoint that accepts POST
+        "https://httpbin.org/put",
+    ],
+    'mining_pools': [
+        "stratum+tcp://pool.fake-{rand}.com:3333",
+        "stratum+tcp://mine.fake-{rand}.net:4444",
+    ],
+    'botnet_irc': [
+        "irc.fake-botnet-{rand}.net:6667",
+        "chat.fake-c2-{rand}.org:6697",
+    ],
+    'malware_urls': [
+        "http://httpbin.org/bytes/1024",  # Returns random bytes (safe)
+        "http://httpbin.org/stream-bytes/2048",
+    ],
+}
+
+
+# Malware behavior descriptions
+MALWARE_DESCRIPTIONS = {
+    MalwareType.C2_BEACON: "C2 beaconing (regular heartbeat to command server)",
+    MalwareType.DATA_EXFIL: "Data exfiltration (large outbound transfers, DNS tunneling)",
+    MalwareType.CRYPTOMINER: "Cryptominer activity (mining pool connections)",
+    MalwareType.RANSOMWARE: "Ransomware patterns (key exchange, .onion lookups)",
+    MalwareType.BOTNET: "Botnet communication (IRC/P2P command channels)",
+    MalwareType.KEYLOGGER: "Keylogger/spyware (small frequent uploads)",
+    MalwareType.TROJAN_DL: "Trojan downloader (fetching payloads)",
+    MalwareType.WORM_SCAN: "Worm scanning (port scans, lateral movement)",
+    MalwareType.ADWARE: "Adware/PUP (excessive ad network connections)",
+}
+
+
+class MalwareSimulator:
+    """
+    Simulates malware-like network behavior for educational purposes.
+
+    "Know thy enemy" - Sun Tzu
+
+    This generates traffic PATTERNS that look like malware behavior,
+    without any actual malicious functionality. Useful for:
+    - Training security analysts
+    - Testing IDS/IPS rules
+    - Honeypot realism
+    - CTF challenges
+    - Incident response drills
+    """
+
+    def __init__(self, seed: str = None):
+        self.seed = seed or f"malware_{int(time.time())}"
+        self.chaos = LogisticMap(self.seed)
+        self.lorenz = LorenzAttractor(self.seed)
+        self.running = False
+        self.events: List[MalwareEvent] = []
+        self.thread: Optional[threading.Thread] = None
+
+        # Behavior generators
+        self.generators: Dict[MalwareType, Callable] = {
+            MalwareType.C2_BEACON: self._generate_c2_beacon,
+            MalwareType.DATA_EXFIL: self._generate_data_exfil,
+            MalwareType.CRYPTOMINER: self._generate_cryptominer,
+            MalwareType.RANSOMWARE: self._generate_ransomware,
+            MalwareType.BOTNET: self._generate_botnet,
+            MalwareType.KEYLOGGER: self._generate_keylogger,
+            MalwareType.TROJAN_DL: self._generate_trojan_dl,
+            MalwareType.WORM_SCAN: self._generate_worm_scan,
+            MalwareType.ADWARE: self._generate_adware,
+        }
+
+        self.stats = {mtype: 0 for mtype in MalwareType}
+
+    def _random_string(self, length: int = 8) -> str:
+        """Generate random string."""
+        chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+        return ''.join(self.chaos.next_choice(list(chars)) for _ in range(length))
+
+    def _log_event(self, event: MalwareEvent):
+        """Log a malware event."""
+        self.events.append(event)
+        self.stats[event.malware_type] += 1
+        if len(self.events) > 1000:
+            self.events = self.events[-1000:]
+
+    def _generate_c2_beacon(self) -> MalwareEvent:
+        """
+        Malware Type 1: C2 Beaconing
+
+        Simulates regular heartbeat connections to a command & control server.
+        Characteristics:
+        - Regular intervals (with jitter)
+        - Small payloads
+        - Encoded/obfuscated data
+        - Unusual user agents
+        """
+        template = self.chaos.next_choice(MALWARE_TARGETS['c2_domains'])
+        domain = template.format(rand=self._random_string(6))
+
+        # Generate fake beacon data (base64-like)
+        beacon_data = self._random_string(32)
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.C2_BEACON,
+            target=f"https://{domain}/api/v1/check",
+            details={
+                'method': 'POST',
+                'interval_seconds': self.chaos.next_int(30, 300),
+                'jitter_percent': self.chaos.next_int(10, 30),
+                'payload_size': len(beacon_data),
+                'user_agent': f"Mozilla/5.0 (compatible; update-agent/{self._random_string(4)})",
+                'encoded_payload': beacon_data[:16] + "...",
+            },
+            ioc_indicators=[
+                f"domain:{domain}",
+                "pattern:regular_interval_beaconing",
+                "pattern:encoded_post_data",
+                "pattern:unusual_user_agent",
+            ],
+        )
+
+        # Attempt DNS resolution (will fail for fake domain)
+        try:
+            socket.gethostbyname(domain)
+        except socket.gaierror:
+            event.details['dns_status'] = 'NXDOMAIN'
+
+        self._log_event(event)
+        return event
+
+    def _generate_data_exfil(self) -> MalwareEvent:
+        """
+        Malware Type 2: Data Exfiltration
+
+        Simulates data theft patterns:
+        - Large outbound transfers
+        - DNS tunneling (long subdomain queries)
+        - Chunked uploads
+        - Off-hours activity
+        """
+        exfil_method = self.chaos.next_choice(['https', 'dns_tunnel'])
+
+        if exfil_method == 'dns_tunnel':
+            # DNS tunneling - encode data in subdomain
+            encoded_data = self._random_string(60)
+            domain = f"{encoded_data}.tunnel.fake-exfil-{self._random_string(4)}.com"
+            target = f"dns://{domain}"
+            details = {
+                'method': 'dns_tunneling',
+                'encoded_length': len(encoded_data),
+                'query_type': 'TXT',
+            }
+            try:
+                socket.gethostbyname(domain)
+            except socket.gaierror:
+                details['status'] = 'query_sent'
+        else:
+            # HTTPS exfil
+            target = self.chaos.next_choice(MALWARE_TARGETS['exfil_endpoints'])
+            chunk_size = self.chaos.next_int(1024, 65536)
+            details = {
+                'method': 'https_post',
+                'chunk_size': chunk_size,
+                'total_chunks': self.chaos.next_int(5, 50),
+                'compression': 'gzip',
+                'encryption': 'aes256',
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.DATA_EXFIL,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                "pattern:large_outbound_transfer",
+                "pattern:off_hours_activity",
+                f"method:{exfil_method}",
+                "pattern:chunked_upload",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def _generate_cryptominer(self) -> MalwareEvent:
+        """
+        Malware Type 3: Cryptominer Activity
+
+        Simulates cryptocurrency mining traffic:
+        - Stratum protocol connections
+        - Mining pool communication
+        - Share submissions
+        """
+        template = self.chaos.next_choice(MALWARE_TARGETS['mining_pools'])
+        pool = template.format(rand=self._random_string(4))
+
+        # Fake wallet address
+        wallet = "0x" + self._random_string(40)
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.CRYPTOMINER,
+            target=pool,
+            details={
+                'protocol': 'stratum',
+                'algorithm': self.chaos.next_choice(['ethash', 'randomx', 'kawpow']),
+                'wallet': wallet[:20] + "...",
+                'worker': f"worker_{self._random_string(4)}",
+                'hashrate': f"{self.chaos.next_int(10, 500)} MH/s",
+                'shares_submitted': self.chaos.next_int(1, 100),
+            },
+            ioc_indicators=[
+                "protocol:stratum",
+                "pattern:mining_pool_connection",
+                f"port:{pool.split(':')[-1] if ':' in pool else '3333'}",
+                "pattern:continuous_connection",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def _generate_ransomware(self) -> MalwareEvent:
+        """
+        Malware Type 4: Ransomware Behavior
+
+        Simulates ransomware network patterns:
+        - Key exchange with C2
+        - .onion domain lookups (Tor)
+        - Ransom note hosting checks
+        """
+        behaviors = ['key_exchange', 'onion_lookup', 'payment_check']
+        behavior = self.chaos.next_choice(behaviors)
+
+        if behavior == 'key_exchange':
+            domain = f"key-escrow-{self._random_string(8)}.xyz"
+            target = f"https://{domain}/api/keys"
+            details = {
+                'operation': 'rsa_key_exchange',
+                'key_size': 4096,
+                'victim_id': self._random_string(16),
+            }
+        elif behavior == 'onion_lookup':
+            onion = self._random_string(56)
+            target = f"http://{onion}.onion"
+            details = {
+                'operation': 'tor_hidden_service_lookup',
+                'purpose': 'ransom_payment_portal',
+            }
+        else:
+            target = f"https://payment-{self._random_string(6)}.top/check"
+            details = {
+                'operation': 'payment_status_check',
+                'bitcoin_address': f"bc1q{self._random_string(38)}",
+                'demanded_btc': round(self.chaos.next() * 5 + 0.5, 4),
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.RANSOMWARE,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                f"behavior:{behavior}",
+                "pattern:crypto_key_exchange",
+                "pattern:tor_communication",
+                "pattern:bitcoin_address",
+            ],
+        )
+
+        # DNS attempt
+        try:
+            if '.onion' not in target:
+                domain = target.split('/')[2]
+                socket.gethostbyname(domain)
+        except (socket.gaierror, IndexError):
+            event.details['dns_status'] = 'failed'
+
+        self._log_event(event)
+        return event
+
+    def _generate_botnet(self) -> MalwareEvent:
+        """
+        Malware Type 5: Botnet Communication
+
+        Simulates botnet C2 channels:
+        - IRC-based command channels
+        - P2P communication
+        - DGA (Domain Generation Algorithm) lookups
+        """
+        comm_type = self.chaos.next_choice(['irc', 'p2p', 'dga'])
+
+        if comm_type == 'irc':
+            template = self.chaos.next_choice(MALWARE_TARGETS['botnet_irc'])
+            target = template.format(rand=self._random_string(4))
+            details = {
+                'protocol': 'irc',
+                'channel': f"#bot_{self._random_string(6)}",
+                'nickname': f"bot_{self._random_string(8)}",
+            }
+        elif comm_type == 'p2p':
+            # Fake P2P peer
+            peer_ip = f"{self.chaos.next_int(1,255)}.{self.chaos.next_int(0,255)}.{self.chaos.next_int(0,255)}.{self.chaos.next_int(1,254)}"
+            target = f"p2p://{peer_ip}:{self.chaos.next_int(10000, 60000)}"
+            details = {
+                'protocol': 'p2p_custom',
+                'peer_count': self.chaos.next_int(5, 50),
+                'message_type': 'heartbeat',
+            }
+        else:
+            # DGA domain
+            dga_domain = self._random_string(12) + self.chaos.next_choice(['.com', '.net', '.xyz', '.top'])
+            target = f"https://{dga_domain}"
+            details = {
+                'protocol': 'https',
+                'dga_seed': datetime.now().strftime("%Y%m%d"),
+                'domain_index': self.chaos.next_int(0, 1000),
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.BOTNET,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                f"protocol:{comm_type}",
+                "pattern:botnet_communication",
+                "pattern:command_channel",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def _generate_keylogger(self) -> MalwareEvent:
+        """
+        Malware Type 6: Keylogger/Spyware
+
+        Simulates keylogger upload patterns:
+        - Small, frequent uploads
+        - Credential harvesting
+        - Screenshot/clipboard uploads
+        """
+        upload_type = self.chaos.next_choice(['keystrokes', 'credentials', 'screenshot', 'clipboard'])
+
+        domain = f"telemetry-{self._random_string(6)}.xyz"
+        target = f"https://{domain}/collect"
+
+        if upload_type == 'keystrokes':
+            details = {
+                'type': 'keystroke_log',
+                'buffer_size': self.chaos.next_int(100, 1000),
+                'window_title': f"[REDACTED] - {self.chaos.next_choice(['Chrome', 'Firefox', 'Outlook', 'Word'])}",
+            }
+        elif upload_type == 'credentials':
+            details = {
+                'type': 'credential_harvest',
+                'source': self.chaos.next_choice(['browser', 'email_client', 'ftp_client']),
+                'entry_count': self.chaos.next_int(1, 20),
+            }
+        elif upload_type == 'screenshot':
+            details = {
+                'type': 'screenshot_capture',
+                'resolution': '1920x1080',
+                'compression': 'jpeg_quality_30',
+                'size_kb': self.chaos.next_int(50, 200),
+            }
+        else:
+            details = {
+                'type': 'clipboard_monitor',
+                'content_type': self.chaos.next_choice(['text', 'password', 'crypto_wallet']),
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.KEYLOGGER,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                f"exfil_type:{upload_type}",
+                "pattern:small_frequent_uploads",
+                "pattern:sensitive_data_collection",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def _generate_trojan_dl(self) -> MalwareEvent:
+        """
+        Malware Type 7: Trojan Downloader
+
+        Simulates malware download patterns:
+        - Payload fetching
+        - Stage loading
+        - Dynamic imports
+        """
+        stage = self.chaos.next_choice(['initial', 'stage2', 'plugin', 'update'])
+
+        target = self.chaos.next_choice(MALWARE_TARGETS['malware_urls'])
+
+        payload_name = self.chaos.next_choice([
+            f"update_{self._random_string(8)}.exe",
+            f"plugin_{self._random_string(6)}.dll",
+            f"config_{self._random_string(4)}.dat",
+            f"module_{self._random_string(5)}.bin",
+        ])
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.TROJAN_DL,
+            target=target,
+            details={
+                'stage': stage,
+                'payload_name': payload_name,
+                'expected_size': self.chaos.next_int(10000, 500000),
+                'hash_type': 'sha256',
+                'obfuscation': self.chaos.next_choice(['xor', 'rc4', 'aes', 'none']),
+            },
+            ioc_indicators=[
+                f"stage:{stage}",
+                "pattern:executable_download",
+                "pattern:obfuscated_payload",
+                f"file_extension:{payload_name.split('.')[-1]}",
+            ],
+        )
+
+        # Actually fetch some bytes (safe endpoint)
+        try:
+            req = urllib.request.Request(target)
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = response.read(1024)
+                event.details['bytes_received'] = len(data)
+        except Exception as e:
+            event.details['download_error'] = str(e)
+
+        self._log_event(event)
+        return event
+
+    def _generate_worm_scan(self) -> MalwareEvent:
+        """
+        Malware Type 8: Worm Scanning
+
+        Simulates worm propagation patterns:
+        - Port scanning
+        - Service enumeration
+        - Vulnerability probing
+        """
+        scan_type = self.chaos.next_choice(['port_scan', 'smb_enum', 'ssh_brute', 'vuln_probe'])
+
+        # Generate target in private IP range (won't actually connect)
+        target_ip = self.chaos.next_choice([
+            f"10.{self.chaos.next_int(0,255)}.{self.chaos.next_int(0,255)}.{self.chaos.next_int(1,254)}",
+            f"192.168.{self.chaos.next_int(0,255)}.{self.chaos.next_int(1,254)}",
+            f"172.{self.chaos.next_int(16,31)}.{self.chaos.next_int(0,255)}.{self.chaos.next_int(1,254)}",
+        ])
+
+        if scan_type == 'port_scan':
+            ports = [22, 23, 80, 443, 445, 3389, 8080]
+            target = f"{target_ip}:{self.chaos.next_choice(ports)}"
+            details = {
+                'scan_type': 'tcp_syn',
+                'ports_scanned': self.chaos.next_int(10, 1000),
+                'open_ports_found': self.chaos.next_int(0, 5),
+            }
+        elif scan_type == 'smb_enum':
+            target = f"smb://{target_ip}:445"
+            details = {
+                'scan_type': 'smb_enumeration',
+                'shares_found': self.chaos.next_int(0, 10),
+                'null_session': self.chaos.next_choice([True, False]),
+            }
+        elif scan_type == 'ssh_brute':
+            target = f"ssh://{target_ip}:22"
+            details = {
+                'scan_type': 'ssh_bruteforce',
+                'attempts': self.chaos.next_int(10, 1000),
+                'usernames_tried': ['root', 'admin', 'user', 'test'],
+            }
+        else:
+            cve = f"CVE-{self.chaos.next_int(2018,2024)}-{self.chaos.next_int(1000,9999)}"
+            target = f"exploit://{target_ip}"
+            details = {
+                'scan_type': 'vulnerability_probe',
+                'cve': cve,
+                'exploit_type': self.chaos.next_choice(['rce', 'lfi', 'sqli', 'overflow']),
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.WORM_SCAN,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                f"scan_type:{scan_type}",
+                "pattern:lateral_movement",
+                "pattern:network_reconnaissance",
+                f"target_network:{target_ip.rsplit('.', 1)[0]}.0/24",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def _generate_adware(self) -> MalwareEvent:
+        """
+        Malware Type 9: Adware/PUP
+
+        Simulates adware traffic patterns:
+        - Excessive ad network connections
+        - Tracking beacon floods
+        - Affiliate fraud clicks
+        """
+        ad_type = self.chaos.next_choice(['ad_fetch', 'tracking', 'click_fraud', 'popup'])
+
+        ad_networks = [
+            f"ads.{self._random_string(6)}-network.com",
+            f"track.{self._random_string(5)}-analytics.net",
+            f"pixel.{self._random_string(4)}-metrics.io",
+        ]
+
+        domain = self.chaos.next_choice(ad_networks)
+        target = f"https://{domain}/serve"
+
+        if ad_type == 'ad_fetch':
+            details = {
+                'type': 'ad_request',
+                'ad_unit': self._random_string(12),
+                'frequency': f"{self.chaos.next_int(10, 100)}/minute",
+            }
+        elif ad_type == 'tracking':
+            details = {
+                'type': 'tracking_beacon',
+                'user_id': self._random_string(24),
+                'events_per_session': self.chaos.next_int(50, 500),
+            }
+        elif ad_type == 'click_fraud':
+            details = {
+                'type': 'fraudulent_click',
+                'affiliate_id': self._random_string(8),
+                'fake_referrer': f"https://legitimate-site-{self._random_string(4)}.com",
+            }
+        else:
+            details = {
+                'type': 'popup_injection',
+                'popups_per_hour': self.chaos.next_int(5, 50),
+                'redirect_chain_length': self.chaos.next_int(2, 8),
+            }
+
+        event = MalwareEvent(
+            timestamp=datetime.now(),
+            malware_type=MalwareType.ADWARE,
+            target=target,
+            details=details,
+            ioc_indicators=[
+                f"ad_behavior:{ad_type}",
+                "pattern:excessive_ad_traffic",
+                "pattern:tracking_abuse",
+                f"network:{domain}",
+            ],
+        )
+
+        self._log_event(event)
+        return event
+
+    def generate_single(self, malware_type: MalwareType = None) -> MalwareEvent:
+        """Generate a single malware behavior event."""
+        if malware_type is None:
+            malware_type = self.chaos.next_choice(list(MalwareType))
+
+        generator = self.generators.get(malware_type)
+        if generator:
+            return generator()
+        return None
+
+    def generate_burst(self, count: int = 10, malware_type: MalwareType = None) -> List[MalwareEvent]:
+        """Generate a burst of malware behavior events."""
+        events = []
+        for _ in range(count):
+            event = self.generate_single(malware_type)
+            if event:
+                events.append(event)
+            delay = abs(self.lorenz.next_normalized()[0]) * 0.3
+            time.sleep(delay)
+        return events
+
+    def start_background(self,
+                         interval: float = 5.0,
+                         malware_types: List[MalwareType] = None):
+        """Start generating malware-like traffic in background."""
+        if self.running:
+            return
+
+        self.running = True
+        allowed_types = malware_types or list(MalwareType)
+
+        def _worker():
+            while self.running:
+                mtype = self.chaos.next_choice(allowed_types)
+                self.generate_single(mtype)
+                jitter = abs(self.lorenz.next_normalized()[0]) * interval
+                time.sleep(interval + jitter)
+
+        self.thread = threading.Thread(target=_worker, daemon=True)
+        self.thread.start()
+
+    def stop_background(self):
+        """Stop background generation."""
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=2)
+            self.thread = None
+
+    def get_stats(self) -> Dict:
+        """Get generation statistics."""
+        return {
+            'total_events': len(self.events),
+            'by_type': {k.value: v for k, v in self.stats.items()},
+            'running': self.running,
+        }
+
+    def get_recent_events(self, count: int = 10) -> List[Dict]:
+        """Get recent events as dicts."""
+        recent = self.events[-count:]
+        return [
+            {
+                'timestamp': e.timestamp.isoformat(),
+                'type': e.malware_type.value,
+                'target': e.target,
+                'details': e.details,
+                'iocs': e.ioc_indicators,
+            }
+            for e in recent
+        ]
+
+
+def list_malware_types() -> Dict[int, MalwareType]:
+    """List all malware types with numeric keys."""
+    return {i+1: mtype for i, mtype in enumerate(MalwareType)}
+
+
+def get_malware_by_number(num: int) -> Optional[MalwareType]:
+    """Get malware type by 1-indexed number."""
+    types = list(MalwareType)
+    if 1 <= num <= len(types):
+        return types[num - 1]
+    return None
+
+
 def list_issue_types() -> Dict[int, IssueType]:
     """List all issue types with numeric keys."""
     return {i+1: issue for i, issue in enumerate(IssueType)}

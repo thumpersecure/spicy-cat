@@ -70,7 +70,9 @@ from lib.dashboard import Dashboard, CompactDisplay, print_identity_card, Colors
 from lib.browser import BrowserManager, FirefoxProfile, check_tor_available, get_browser_fingerprint_info
 from lib.daemon import SpicyCatDaemon, DaemonClient, daemon_status, start_daemon, stop_daemon
 from lib.traffic import (TrafficIssueSimulator, IssueType, ISSUE_DESCRIPTIONS,
-                          list_issue_types, get_issue_by_number)
+                          list_issue_types, get_issue_by_number,
+                          MalwareSimulator, MalwareType, MALWARE_DESCRIPTIONS,
+                          list_malware_types, get_malware_by_number)
 
 
 # Version and metadata
@@ -401,58 +403,89 @@ def cmd_export(args):
 
 
 def cmd_traffic(args):
-    """Generate decoy traffic that mimics system issues."""
+    """Generate decoy traffic that mimics system issues or malware behavior."""
     print_banner()
 
-    print(f"{Colors.BOLD}Traffic Issue Simulator{Colors.RESET}")
-    print(f"{Colors.DIM}Generate decoy traffic to mask real activity{Colors.RESET}")
+    # Check if malware mode
+    is_malware_mode = args.malware
+
+    if is_malware_mode:
+        print(f"{Colors.BOLD}{Colors.BRIGHT_RED}Malware Behavior Simulator{Colors.RESET}")
+        print(f"{Colors.DIM}Educational/testing - simulates malware network patterns{Colors.RESET}")
+        print(f"{Colors.BRIGHT_BLACK}(No actual malicious functionality){Colors.RESET}")
+    else:
+        print(f"{Colors.BOLD}Traffic Issue Simulator{Colors.RESET}")
+        print(f"{Colors.DIM}Generate decoy traffic to mask real activity{Colors.RESET}")
     print()
 
-    # List available issue types
+    # List available types
     if args.list_types:
-        print(f"{Colors.BOLD}Available Issue Types (9):{Colors.RESET}")
-        print(f"{Colors.BRIGHT_BLACK}{'─' * 60}{Colors.RESET}")
-        for i, issue in enumerate(IssueType, 1):
-            print(f"  {Colors.CYAN}[{i}]{Colors.RESET} {issue.value:25} {Colors.DIM}{ISSUE_DESCRIPTIONS[issue]}{Colors.RESET}")
+        if is_malware_mode:
+            print(f"{Colors.BOLD}Available Malware Behavior Types (9):{Colors.RESET}")
+            print(f"{Colors.BRIGHT_BLACK}{'─' * 65}{Colors.RESET}")
+            for i, mtype in enumerate(MalwareType, 1):
+                print(f"  {Colors.RED}[{i}]{Colors.RESET} {mtype.value:20} {Colors.DIM}{MALWARE_DESCRIPTIONS[mtype]}{Colors.RESET}")
+        else:
+            print(f"{Colors.BOLD}Available Issue Types (9):{Colors.RESET}")
+            print(f"{Colors.BRIGHT_BLACK}{'─' * 60}{Colors.RESET}")
+            for i, issue in enumerate(IssueType, 1):
+                print(f"  {Colors.CYAN}[{i}]{Colors.RESET} {issue.value:25} {Colors.DIM}{ISSUE_DESCRIPTIONS[issue]}{Colors.RESET}")
         return
 
-    # Determine which issue types to use
+    # Determine which types to use
     selected_types = []
     if args.type:
         for t in args.type:
             if t.isdigit():
-                issue = get_issue_by_number(int(t))
-                if issue:
-                    selected_types.append(issue)
+                if is_malware_mode:
+                    mtype = get_malware_by_number(int(t))
+                    if mtype:
+                        selected_types.append(mtype)
+                else:
+                    issue = get_issue_by_number(int(t))
+                    if issue:
+                        selected_types.append(issue)
             else:
                 try:
-                    issue = IssueType(t)
-                    selected_types.append(issue)
+                    if is_malware_mode:
+                        mtype = MalwareType(t)
+                        selected_types.append(mtype)
+                    else:
+                        issue = IssueType(t)
+                        selected_types.append(issue)
                 except ValueError:
-                    print(f"{Colors.RED}Unknown issue type:{Colors.RESET} {t}")
+                    print(f"{Colors.RED}Unknown type:{Colors.RESET} {t}")
                     return
 
     if not selected_types:
-        selected_types = list(IssueType)  # All types
+        selected_types = list(MalwareType) if is_malware_mode else list(IssueType)
 
     # Create simulator
-    sim = TrafficIssueSimulator()
+    if is_malware_mode:
+        sim = MalwareSimulator()
+        type_attr = 'malware_type'
+    else:
+        sim = TrafficIssueSimulator()
+        type_attr = 'issue_type'
 
-    print(f"{Colors.YELLOW}Selected issue types:{Colors.RESET}")
-    for issue in selected_types:
-        print(f"  {Colors.CYAN}•{Colors.RESET} {issue.value}")
+    print(f"{Colors.YELLOW}Selected types:{Colors.RESET}")
+    for t in selected_types:
+        color = Colors.RED if is_malware_mode else Colors.CYAN
+        print(f"  {color}•{Colors.RESET} {t.value}")
     print()
 
     # Run mode
     if args.background:
-        # Background mode
         interval = args.interval or 5.0
-        print(f"{Colors.GREEN}Starting background traffic generation...{Colors.RESET}")
+        print(f"{Colors.GREEN}Starting background generation...{Colors.RESET}")
         print(f"{Colors.DIM}Interval: ~{interval}s (with jitter){Colors.RESET}")
         print(f"{Colors.DIM}Press Ctrl+C to stop{Colors.RESET}")
         print()
 
-        sim.start_background(interval=interval, issue_types=selected_types)
+        if is_malware_mode:
+            sim.start_background(interval=interval, malware_types=selected_types)
+        else:
+            sim.start_background(interval=interval, issue_types=selected_types)
 
         try:
             import time
@@ -474,22 +507,26 @@ def cmd_traffic(args):
     else:
         # Burst mode
         count = args.count or 5
-        print(f"{Colors.CYAN}Generating {count} traffic events...{Colors.RESET}")
+        mode_name = "malware behavior" if is_malware_mode else "traffic"
+        print(f"{Colors.CYAN}Generating {count} {mode_name} events...{Colors.RESET}")
         print()
 
         for i in range(count):
-            issue_type = selected_types[i % len(selected_types)]
-            event = sim.generate_single(issue_type)
+            selected_type = selected_types[i % len(selected_types)]
+            event = sim.generate_single(selected_type)
 
-            status = f"{Colors.GREEN}✓{Colors.RESET}" if event.success else f"{Colors.YELLOW}✗{Colors.RESET}"
-            print(f"  {status} [{event.issue_type.value:20}] {event.target[:40]}")
+            status_color = Colors.RED if is_malware_mode else Colors.YELLOW
+            event_type = getattr(event, type_attr)
+            print(f"  {status_color}◆{Colors.RESET} [{event_type.value:20}] {event.target[:40]}")
 
             if args.verbose:
                 for k, v in event.details.items():
                     print(f"      {Colors.DIM}{k}: {v}{Colors.RESET}")
+                if is_malware_mode and hasattr(event, 'ioc_indicators'):
+                    print(f"      {Colors.BRIGHT_RED}IOCs: {', '.join(event.ioc_indicators[:3])}{Colors.RESET}")
 
         print()
-        print(f"{Colors.GREEN}Generated {count} decoy traffic events.{Colors.RESET}")
+        print(f"{Colors.GREEN}Generated {count} {mode_name} events.{Colors.RESET}")
 
     # Show stats
     stats = sim.get_stats()
@@ -569,7 +606,7 @@ Examples:
     traffic_parser.add_argument('--type', '-t', action='append',
                                 help='Issue type (1-9 or name). Can repeat for multiple types.')
     traffic_parser.add_argument('--list-types', '-l', action='store_true',
-                                help='List available issue types')
+                                help='List available issue/malware types')
     traffic_parser.add_argument('--count', '-c', type=int, default=5,
                                 help='Number of events to generate (default: 5)')
     traffic_parser.add_argument('--background', '-b', action='store_true',
@@ -578,6 +615,8 @@ Examples:
                                 help='Interval between events in background mode (default: 5.0s)')
     traffic_parser.add_argument('--verbose', '-v', action='store_true',
                                 help='Show detailed event information')
+    traffic_parser.add_argument('--malware', '-m', action='store_true',
+                                help='Simulate malware behavior (educational/testing)')
 
     args = parser.parse_args()
 

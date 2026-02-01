@@ -295,6 +295,45 @@ spicy-cat traffic --type 4 --count 3 --verbose
 | 8 | `rate_limited` | HTTP 429 Too Many Requests (API rate limiting) |
 | 9 | `proxy_error` | HTTP 502/504 gateway and proxy errors |
 
+### Malware Behavior Simulation (Educational)
+
+Simulate malware-like network patterns for security training, IDS testing, honeypots, and CTF challenges:
+
+```bash
+# List malware behavior types
+spicy-cat traffic --malware --list-types
+
+# Generate C2 beaconing and ransomware patterns
+spicy-cat traffic --malware --type 1 --type 4 --count 5
+
+# Run continuous malware-like traffic
+spicy-cat traffic --malware --background --interval 10
+
+# Verbose with IOC indicators
+spicy-cat traffic --malware --type c2_beacon --verbose
+```
+
+**Available Malware Behavior Types (9):**
+| # | Type | Description |
+|---|------|-------------|
+| 1 | `c2_beacon` | C2 beaconing (regular heartbeat to command server) |
+| 2 | `data_exfil` | Data exfiltration (DNS tunneling, large uploads) |
+| 3 | `cryptominer` | Cryptominer (mining pool connections) |
+| 4 | `ransomware` | Ransomware patterns (key exchange, .onion) |
+| 5 | `botnet` | Botnet communication (IRC/P2P/DGA) |
+| 6 | `keylogger` | Keylogger/spyware (small frequent uploads) |
+| 7 | `trojan_downloader` | Trojan downloader (payload fetching) |
+| 8 | `worm_scan` | Worm scanning (port scans, lateral movement) |
+| 9 | `adware` | Adware/PUP (excessive ad network traffic) |
+
+> **Note**: This simulates network PATTERNS only - no actual malicious functionality.
+> All traffic goes to safe/controlled endpoints. Useful for:
+> - Security analyst training
+> - IDS/IPS rule testing
+> - Honeypot realism
+> - CTF challenges
+> - Incident response drills
+
 ---
 
 ## 🔬 How It Works
