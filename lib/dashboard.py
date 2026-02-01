@@ -72,6 +72,121 @@ SPICY_CAT_SMALL = r"""
 
 SPICY_CAT_MINI = r"=^.^="
 
+# ASCII cat animation frames for dashboard
+CAT_FRAMES = [
+    # Frame 1: Alert cat
+    r"""
+   /\_/\
+  ( o.o )
+   > ^ <
+  /|   |\
+ (_|   |_)
+""",
+    # Frame 2: Sleepy cat
+    r"""
+   /\_/\
+  ( -.- )
+   > ~ <
+  /|   |\
+ (_|   |_)
+""",
+    # Frame 3: Curious cat
+    r"""
+   /\_/\
+  ( o.O )
+   > ? <
+  /|   |\
+ (_|   |_)
+""",
+    # Frame 4: Happy cat
+    r"""
+   /\_/\
+  ( ^.^ )
+   > w <
+  /|   |\
+ (_|   |_)
+""",
+    # Frame 5: Stretching cat
+    r"""
+     /\_/\
+    ( o.o )
+  />  ^   \
+ / |     | \
+(__/     \__)
+""",
+    # Frame 6: Grooming cat
+    r"""
+   /\_/\
+  ( >.< )
+  _> _ <_
+  \|   |/
+   |   |
+""",
+    # Frame 7: Stalking cat
+    r"""
+  /\_____/\
+ /  o   o  \
+( ==  ^  == )
+ \    ~    /
+  \__   __/
+""",
+    # Frame 8: Loaf cat
+    r"""
+    /\_/\
+   ( o.o )
+  __|   |__
+ |_________|
+""",
+    # Frame 9: Tail swish
+    r"""
+   /\_/\  ~
+  ( o.o )/
+   > ^ <
+  /|   |\
+ (_|   |_)
+""",
+]
+
+# Cat GIF URLs (popular free cat gif services)
+CAT_GIF_SOURCES = [
+    "https://cataas.com/cat/gif",
+    "https://thecatapi.com/api/images/get?format=src&type=gif",
+    "https://edgecats.net/",
+]
+
+# Pre-rendered "ASCII GIFs" (multi-frame scenes)
+CAT_SCENES = {
+    'hunting': [
+        "   /\\_/\\      ...      ~>))'>",
+        "  ( o.o )    ....     ~>))'>",
+        " ( ( > ^))  .....    ~>))'>",
+        "   \\(_|_)/    ..    ~=))'>  POUNCE!",
+    ],
+    'sleeping': [
+        "   /\\_/\\   z",
+        "  ( -.- )  zZ",
+        "   > ~ <  zZz",
+        "  /|   |\\ zZzZ",
+    ],
+    'walking': [
+        "      /\\_/\\",
+        "     ( o.o )",
+        " /\\__/    \\__/\\",
+        "(_/          \\_)",
+    ],
+}
+
+
+def get_random_cat_gif_url() -> str:
+    """Get a URL for a random cat GIF."""
+    import random
+    return random.choice(CAT_GIF_SOURCES)
+
+
+def get_cat_frame(frame_index: int) -> str:
+    """Get a specific cat animation frame."""
+    return CAT_FRAMES[frame_index % len(CAT_FRAMES)]
+
 
 def clear_screen():
     """Clear the terminal screen."""
@@ -148,11 +263,14 @@ class Dashboard:
     Cats are minimalists. So is this dashboard.
     """
 
-    def __init__(self, identity=None, refresh_interval: float = 1.0):
+    def __init__(self, identity=None, refresh_interval: float = 1.0, show_cat: bool = True):
         self.identity = identity
         self.refresh_interval = refresh_interval
         self.running = False
         self.start_time = datetime.now()
+        self.show_cat = show_cat
+        self.cat_frame_index = 0
+        self.cat_gif_url = get_random_cat_gif_url()  # Cache one for session
 
     def set_identity(self, identity):
         """Set the current identity to display."""
@@ -161,12 +279,22 @@ class Dashboard:
     def _format_header(self, width: int) -> List[str]:
         """Format the header section."""
         lines = []
-        lines.append(f"{Colors.BRIGHT_MAGENTA}{Colors.BOLD}")
-        for line in SPICY_CAT_SMALL.strip().split('\n'):
-            lines.append(line)
-        lines.append(f"{Colors.RESET}")
+
+        # Animated cat (cycles through frames)
+        if self.show_cat:
+            cat_frame = get_cat_frame(self.cat_frame_index)
+            lines.append(f"{Colors.BRIGHT_MAGENTA}{Colors.BOLD}")
+            for line in cat_frame.strip().split('\n'):
+                lines.append(line)
+            lines.append(f"{Colors.RESET}")
+
         lines.append(f"{Colors.BRIGHT_CYAN}spicy-cat{Colors.RESET} {Colors.DIM}v1.0.0{Colors.RESET}")
         lines.append(f"{Colors.BRIGHT_BLACK}{'─' * min(40, width)}{Colors.RESET}")
+
+        # Random cat GIF URL
+        lines.append(f"{Colors.DIM}Cat GIF:{Colors.RESET} {Colors.CYAN}{self.cat_gif_url}{Colors.RESET}")
+        lines.append("")
+
         return lines
 
     def _format_identity(self, width: int) -> List[str]:
@@ -234,6 +362,10 @@ class Dashboard:
                 'terse': Colors.YELLOW,
                 'verbose': Colors.MAGENTA,
                 'gen_z': Colors.CYAN,
+                'academic': Colors.BRIGHT_BLUE,
+                'technical': Colors.BRIGHT_WHITE,
+                'friendly': Colors.BRIGHT_GREEN,
+                'sarcastic': Colors.BRIGHT_MAGENTA,
             }.get(style, Colors.WHITE)
 
             lines.append(f"{Colors.DIM}Style:{Colors.RESET} {style_color}{style}{Colors.RESET}")
@@ -256,7 +388,7 @@ class Dashboard:
         lines = []
         lines.append("")
         lines.append(f"{Colors.BRIGHT_BLACK}{'─' * min(40, width)}{Colors.RESET}")
-        lines.append(f"{Colors.DIM}[q] Quit  [r] Rotate  [n] New  [?] Help{Colors.RESET}")
+        lines.append(f"{Colors.DIM}[q]Quit [r]Rotate [n]New [c]Cat GIF [g]Toggle Cat [?]Help{Colors.RESET}")
         return lines
 
     def render(self) -> str:
@@ -301,6 +433,9 @@ class Dashboard:
             while self.running:
                 self.display_once()
 
+                # Advance cat animation frame
+                self.cat_frame_index = (self.cat_frame_index + 1) % len(CAT_FRAMES)
+
                 # Wait for input or timeout
                 readable, _, _ = select.select([sys.stdin], [], [], self.refresh_interval)
 
@@ -317,6 +452,12 @@ class Dashboard:
                         # Signal new identity request
                         print(f"\n{Colors.CYAN}Generating new identity...{Colors.RESET}")
                         time.sleep(0.5)
+                    elif key.lower() == 'c':
+                        # New random cat GIF
+                        self.cat_gif_url = get_random_cat_gif_url()
+                    elif key.lower() == 'g':
+                        # Toggle cat animation
+                        self.show_cat = not self.show_cat
                     elif key == '?':
                         self._show_help()
 
@@ -341,6 +482,8 @@ class Dashboard:
   {Colors.YELLOW}q{Colors.RESET}  Quit dashboard
   {Colors.YELLOW}r{Colors.RESET}  Rotate to next saved identity
   {Colors.YELLOW}n{Colors.RESET}  Generate new identity
+  {Colors.YELLOW}c{Colors.RESET}  Get new random cat GIF URL
+  {Colors.YELLOW}g{Colors.RESET}  Toggle cat animation on/off
   {Colors.YELLOW}?{Colors.RESET}  Show this help
 
 {Colors.BOLD}Status Indicators:{Colors.RESET}
@@ -352,6 +495,10 @@ class Dashboard:
   {Colors.BRIGHT_YELLOW}Yellow{Colors.RESET}  Recent (< 24 hours)
   {Colors.YELLOW}Orange{Colors.RESET}  Aging (< 1 week)
   {Colors.BRIGHT_RED}Red{Colors.RESET}     Old (> 1 week, consider rotating)
+
+{Colors.BOLD}Writing Styles (9 total):{Colors.RESET}
+  formal, casual, terse, verbose, gen_z
+  academic, technical, friendly, sarcastic
 
 {Colors.DIM}Press any key to continue...{Colors.RESET}
 """)

@@ -28,7 +28,7 @@ class WritingStyleMarkov:
     in how text is transformed/suggested.
     """
 
-    # Predefined style profiles
+    # Predefined style profiles (9 styles for maximum anti-stylometry)
     STYLES = {
         'formal': {
             'contractions': False,
@@ -75,15 +75,64 @@ class WritingStyleMarkov:
             'capitalization': 'lowercase',
             'filler_words': ['lowkey', 'ngl', 'fr', 'tbh', 'literally'],
         },
+        'academic': {
+            'contractions': False,
+            'punctuation_density': 1.3,
+            'avg_sentence_length': 22,
+            'vocabulary_tier': 'scholarly',
+            'emoji_probability': 0.0,
+            'capitalization': 'proper',
+            'filler_words': ['notably', 'it should be noted', 'the literature suggests', 'arguably'],
+            'passive_voice': True,
+            'hedging': ['may', 'might', 'appears to', 'suggests that', 'it is possible'],
+        },
+        'technical': {
+            'contractions': False,
+            'punctuation_density': 1.0,
+            'avg_sentence_length': 14,
+            'vocabulary_tier': 'jargon',
+            'emoji_probability': 0.0,
+            'capitalization': 'proper',
+            'filler_words': ['i.e.', 'e.g.', 'cf.', 'viz.', 'N.B.'],
+            'abbreviations': True,
+            'precision': 'high',
+        },
+        'friendly': {
+            'contractions': True,
+            'punctuation_density': 1.1,
+            'avg_sentence_length': 10,
+            'vocabulary_tier': 'warm',
+            'emoji_probability': 0.15,
+            'capitalization': 'relaxed',
+            'filler_words': ['hey', 'so', 'just wanted to', 'hope you\'re well'],
+            'exclamations': True,
+            'personal_pronouns': 'heavy',
+        },
+        'sarcastic': {
+            'contractions': True,
+            'punctuation_density': 0.9,
+            'avg_sentence_length': 11,
+            'vocabulary_tier': 'ironic',
+            'emoji_probability': 0.05,
+            'capitalization': 'dramatic',
+            'filler_words': ['obviously', 'clearly', 'sure', 'wow', 'shocking'],
+            'rhetorical_questions': True,
+            'air_quotes': True,
+        },
     }
 
     # Transition probabilities between styles (for drift)
+    # Nine lives, nine styles - each can drift to related styles
     TRANSITIONS = {
-        'formal': {'formal': 0.7, 'casual': 0.15, 'verbose': 0.15},
-        'casual': {'casual': 0.6, 'formal': 0.1, 'terse': 0.15, 'gen_z': 0.15},
-        'terse': {'terse': 0.7, 'casual': 0.25, 'formal': 0.05},
-        'verbose': {'verbose': 0.6, 'formal': 0.3, 'casual': 0.1},
-        'gen_z': {'gen_z': 0.7, 'casual': 0.25, 'terse': 0.05},
+        'formal': {'formal': 0.5, 'academic': 0.2, 'verbose': 0.15, 'technical': 0.1, 'casual': 0.05},
+        'casual': {'casual': 0.4, 'friendly': 0.2, 'terse': 0.15, 'gen_z': 0.15, 'sarcastic': 0.1},
+        'terse': {'terse': 0.5, 'casual': 0.2, 'technical': 0.15, 'sarcastic': 0.1, 'formal': 0.05},
+        'verbose': {'verbose': 0.5, 'academic': 0.2, 'formal': 0.15, 'friendly': 0.1, 'casual': 0.05},
+        'gen_z': {'gen_z': 0.5, 'casual': 0.2, 'sarcastic': 0.15, 'terse': 0.1, 'friendly': 0.05},
+        'academic': {'academic': 0.5, 'formal': 0.2, 'verbose': 0.15, 'technical': 0.1, 'terse': 0.05},
+        'technical': {'technical': 0.5, 'terse': 0.2, 'academic': 0.15, 'formal': 0.1, 'casual': 0.05},
+        'friendly': {'friendly': 0.5, 'casual': 0.2, 'verbose': 0.15, 'gen_z': 0.1, 'sarcastic': 0.05},
+        'sarcastic': {'sarcastic': 0.5, 'casual': 0.2, 'terse': 0.15, 'gen_z': 0.1, 'friendly': 0.05},
     }
 
     def __init__(self, seed: str, initial_style: str = 'casual'):

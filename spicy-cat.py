@@ -69,6 +69,8 @@ from lib.identity import Identity, IdentityVault, quick_identity, generate_seed,
 from lib.dashboard import Dashboard, CompactDisplay, print_identity_card, Colors, SPICY_CAT_LOGO, SPICY_CAT_SMALL
 from lib.browser import BrowserManager, FirefoxProfile, check_tor_available, get_browser_fingerprint_info
 from lib.daemon import SpicyCatDaemon, DaemonClient, daemon_status, start_daemon, stop_daemon
+from lib.traffic import (TrafficIssueSimulator, IssueType, ISSUE_DESCRIPTIONS,
+                          list_issue_types, get_issue_by_number)
 
 
 # Version and metadata
@@ -398,6 +400,106 @@ def cmd_export(args):
     return True
 
 
+def cmd_traffic(args):
+    """Generate decoy traffic that mimics system issues."""
+    print_banner()
+
+    print(f"{Colors.BOLD}Traffic Issue Simulator{Colors.RESET}")
+    print(f"{Colors.DIM}Generate decoy traffic to mask real activity{Colors.RESET}")
+    print()
+
+    # List available issue types
+    if args.list_types:
+        print(f"{Colors.BOLD}Available Issue Types (9):{Colors.RESET}")
+        print(f"{Colors.BRIGHT_BLACK}{'─' * 60}{Colors.RESET}")
+        for i, issue in enumerate(IssueType, 1):
+            print(f"  {Colors.CYAN}[{i}]{Colors.RESET} {issue.value:25} {Colors.DIM}{ISSUE_DESCRIPTIONS[issue]}{Colors.RESET}")
+        return
+
+    # Determine which issue types to use
+    selected_types = []
+    if args.type:
+        for t in args.type:
+            if t.isdigit():
+                issue = get_issue_by_number(int(t))
+                if issue:
+                    selected_types.append(issue)
+            else:
+                try:
+                    issue = IssueType(t)
+                    selected_types.append(issue)
+                except ValueError:
+                    print(f"{Colors.RED}Unknown issue type:{Colors.RESET} {t}")
+                    return
+
+    if not selected_types:
+        selected_types = list(IssueType)  # All types
+
+    # Create simulator
+    sim = TrafficIssueSimulator()
+
+    print(f"{Colors.YELLOW}Selected issue types:{Colors.RESET}")
+    for issue in selected_types:
+        print(f"  {Colors.CYAN}•{Colors.RESET} {issue.value}")
+    print()
+
+    # Run mode
+    if args.background:
+        # Background mode
+        interval = args.interval or 5.0
+        print(f"{Colors.GREEN}Starting background traffic generation...{Colors.RESET}")
+        print(f"{Colors.DIM}Interval: ~{interval}s (with jitter){Colors.RESET}")
+        print(f"{Colors.DIM}Press Ctrl+C to stop{Colors.RESET}")
+        print()
+
+        sim.start_background(interval=interval, issue_types=selected_types)
+
+        try:
+            import time
+            while True:
+                time.sleep(5)
+                stats = sim.get_stats()
+                recent = sim.get_recent_events(3)
+
+                print(f"\r{Colors.BRIGHT_BLACK}Events: {stats['total_events']} | ", end='')
+                if recent:
+                    latest = recent[-1]
+                    print(f"Last: {latest['type']} -> {latest['target'][:30]}...{Colors.RESET}", end='')
+                sys.stdout.flush()
+
+        except KeyboardInterrupt:
+            print(f"\n{Colors.YELLOW}Stopping...{Colors.RESET}")
+            sim.stop_background()
+
+    else:
+        # Burst mode
+        count = args.count or 5
+        print(f"{Colors.CYAN}Generating {count} traffic events...{Colors.RESET}")
+        print()
+
+        for i in range(count):
+            issue_type = selected_types[i % len(selected_types)]
+            event = sim.generate_single(issue_type)
+
+            status = f"{Colors.GREEN}✓{Colors.RESET}" if event.success else f"{Colors.YELLOW}✗{Colors.RESET}"
+            print(f"  {status} [{event.issue_type.value:20}] {event.target[:40]}")
+
+            if args.verbose:
+                for k, v in event.details.items():
+                    print(f"      {Colors.DIM}{k}: {v}{Colors.RESET}")
+
+        print()
+        print(f"{Colors.GREEN}Generated {count} decoy traffic events.{Colors.RESET}")
+
+    # Show stats
+    stats = sim.get_stats()
+    print()
+    print(f"{Colors.BOLD}Statistics:{Colors.RESET}")
+    for issue_type, count in stats['by_type'].items():
+        if count > 0:
+            print(f"  {issue_type}: {count}")
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -462,6 +564,21 @@ Examples:
     export_parser.add_argument('--format', '-f', choices=['json', 'csv', 'minimal'],
                                default='json', help='Export format')
 
+    # traffic
+    traffic_parser = subparsers.add_parser('traffic', help='Generate decoy traffic')
+    traffic_parser.add_argument('--type', '-t', action='append',
+                                help='Issue type (1-9 or name). Can repeat for multiple types.')
+    traffic_parser.add_argument('--list-types', '-l', action='store_true',
+                                help='List available issue types')
+    traffic_parser.add_argument('--count', '-c', type=int, default=5,
+                                help='Number of events to generate (default: 5)')
+    traffic_parser.add_argument('--background', '-b', action='store_true',
+                                help='Run continuously in background')
+    traffic_parser.add_argument('--interval', '-i', type=float, default=5.0,
+                                help='Interval between events in background mode (default: 5.0s)')
+    traffic_parser.add_argument('--verbose', '-v', action='store_true',
+                                help='Show detailed event information')
+
     args = parser.parse_args()
 
     # No command - show help
@@ -479,6 +596,7 @@ Examples:
         print(f"  {Colors.CYAN}dashboard{Colors.RESET}  Live status display")
         print(f"  {Colors.CYAN}daemon{Colors.RESET}     Background service")
         print(f"  {Colors.CYAN}export{Colors.RESET}     Export identity data")
+        print(f"  {Colors.CYAN}traffic{Colors.RESET}    Generate decoy traffic (9 issue types)")
         print()
         print(f"{Colors.DIM}Use 'spicy-cat <command> --help' for more info{Colors.RESET}")
         print()
@@ -498,6 +616,7 @@ Examples:
         'dashboard': cmd_dashboard,
         'daemon': cmd_daemon,
         'export': cmd_export,
+        'traffic': cmd_traffic,
     }
 
     if args.command in commands:

@@ -163,9 +163,10 @@ Commands:
   delete     Remove identity
   rotate     Switch identities
   browse     Launch Firefox with identity
-  dashboard  Live status display
+  dashboard  Live status display (with cat animation!)
   daemon     Background service
   export     Export identity data
+  traffic    Generate decoy traffic (9 issue types)
 ```
 
 ### Generate Identity
@@ -229,6 +230,8 @@ spicy-cat dashboard work_alias
 | `q` | Quit |
 | `r` | Rotate identity |
 | `n` | New identity |
+| `c` | New random cat GIF URL |
+| `g` | Toggle cat animation |
 | `?` | Help |
 
 ### Background Daemon
@@ -256,6 +259,41 @@ spicy-cat export work_alias --format minimal
 # CSV (for spreadsheets)
 spicy-cat export work_alias --format csv
 ```
+
+### Traffic Decoy Generator
+
+Generate fake network traffic that looks like system issues to mask real activity:
+
+```bash
+# List all 9 issue types
+spicy-cat traffic --list-types
+
+# Generate 5 random decoy events
+spicy-cat traffic
+
+# Generate specific issue types (by number or name)
+spicy-cat traffic --type 1 --type 3  # DNS + SSL errors
+spicy-cat traffic --type dns_failure --type ssl_error
+
+# Run continuously in background
+spicy-cat traffic --background --interval 10
+
+# Verbose output with details
+spicy-cat traffic --type 4 --count 3 --verbose
+```
+
+**Available Issue Types:**
+| # | Type | Description |
+|---|------|-------------|
+| 1 | `dns_failure` | DNS resolution failures (NXDOMAIN, timeouts) |
+| 2 | `connection_timeout` | TCP connection timeouts to unreachable hosts |
+| 3 | `ssl_error` | SSL/TLS certificate and handshake errors |
+| 4 | `service_unavailable` | HTTP 503 Service Unavailable responses |
+| 5 | `packet_loss` | UDP packet loss and retransmission patterns |
+| 6 | `bandwidth_throttle` | Slow/stalled downloads, bandwidth throttling |
+| 7 | `auth_loop` | Failed authentication attempts, OAuth loops |
+| 8 | `rate_limited` | HTTP 429 Too Many Requests (API rate limiting) |
+| 9 | `proxy_error` | HTTP 502/504 gateway and proxy errors |
 
 ---
 
@@ -290,22 +328,30 @@ Unlike typical random generators, spicy-cat uses **deterministic chaos**:
 ### Markov Behavioral Models
 
 ```
-Writing Styles:
+Writing Styles (9 total for anti-stylometry):
+
 ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  FORMAL  │◄───►│  CASUAL  │◄───►│  TERSE   │
+│  FORMAL  │◄───►│ ACADEMIC │◄───►│TECHNICAL │
+└──────────┘     └──────────┘     └──────────┘
+     ▲                                  ▲
+     │                                  │
+     ▼                                  ▼
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│ VERBOSE  │◄───►│  CASUAL  │◄───►│  TERSE   │
 └──────────┘     └──────────┘     └──────────┘
      ▲               ▲               ▲
      │               │               │
      ▼               ▼               ▼
-┌──────────┐     ┌──────────┐
-│ VERBOSE  │◄───►│  GEN_Z   │
-└──────────┘     └──────────┘
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│ FRIENDLY │◄───►│  GEN_Z   │◄───►│SARCASTIC │
+└──────────┘     └──────────┘     └──────────┘
 
-Each style has:
-- Contraction preferences
-- Sentence length targets
-- Vocabulary tier
-- Filler word patterns
+Style Attributes:
+- Contraction preferences (formal: none, casual: heavy)
+- Sentence length targets (terse: 6, verbose: 25)
+- Vocabulary tier (academic: scholarly, gen_z: slang)
+- Filler word patterns (friendly: "hey", "just wanted to")
+- Special markers (sarcastic: rhetorical questions, air quotes)
 - Punctuation density
 ```
 
