@@ -567,12 +567,12 @@ Built with:
 
 ```
     /\_____/\
-   /  o   o  \    "Stay curious. Stay anonymous."
+   /  o   o  \"Stay curious. Stay anonymous."
   ( ==  ^  == )
-   )  ~~~  (
-  (         )
-   \       /
-    \_____/
+    )  ~~~  (
+   (         )
+    \       /
+     \_____/
 
         =^.^=
 ```
