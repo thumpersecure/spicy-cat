@@ -14,7 +14,7 @@
 (__(__)___(__)__)
 </pre>
 
-*"On the internet, nobody knows you're a cat."*
+*"On the internet, everybody knows you're a cat."*
 
 <br>
 
@@ -567,12 +567,14 @@ Built with:
 
 ```
     /\_____/\
-   /  o   o  \"Stay curious. Stay anonymous."
+   /  o   o  \
   ( ==  ^  == )
     )  ~~~  (
    (         )
     \       /
      \_____/
+
+"Stay curious. Stay anonymous."
 
         =^.^=
 ```
