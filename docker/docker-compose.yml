@@ -1,0 +1,223 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  spicy-cat Docker Compose Configuration
+#
+#  "Orchestrating privacy like a cat herding its kittens."
+#
+#  Usage:
+#    docker-compose up -d              # Start all services
+#    docker-compose up spicy-cat       # Start main container only
+#    docker-compose up wifi-chaos      # Start WiFi chaos only
+#    docker-compose logs -f            # Follow all logs
+#    docker-compose down               # Stop everything
+#
+#  Profiles:
+#    docker-compose --profile full up   # All services
+#    docker-compose --profile wifi up   # WiFi tools only
+#    docker-compose --profile stealth up # Minimal footprint
+#
+# ══════════════════════════════════════════════════════════════════════════
+
+version: "3.9"
+
+services:
+  # ── Main Privacy Container ───────────────────────────────────────────
+  spicy-cat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: spicy-cat-privacy
+    hostname: generic-workstation
+    restart: unless-stopped
+
+    # Capabilities needed for network stack manipulation
+    cap_add:
+      - NET_ADMIN       # iptables, sysctl, network config
+      - NET_RAW         # Raw sockets for TCP/IP normalization
+      - SYS_ADMIN       # sysctl modifications
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Environment configuration
+    environment:
+      - SPICY_CAT_MODE=full
+      - SPICY_CAT_AGENT=true
+      - SPICY_CAT_TELEMETRY_CHAOS=true
+      - SPICY_CAT_FINGERPRINT=true
+      - SPICY_CAT_DNS_CHAFF=true
+      - SPICY_CAT_PHANTOM_SWARM=true
+      - SPICY_CAT_LOG_LEVEL=INFO
+      - SPICY_CAT_ROTATION_INTERVAL=1800
+      - SPICY_CAT_THREAT_RESPONSE=auto
+
+    # Volumes for persistent state
+    volumes:
+      - spicy-data:/root/.spicy-cat
+      - spicy-logs:/var/log/spicy-cat
+
+    # DNS configuration (prevent DNS leaks)
+    dns:
+      - 127.0.0.1
+      - 9.9.9.9      # Quad9 as fallback
+      - 1.1.1.1      # Cloudflare as secondary fallback
+
+    # Network
+    networks:
+      - spicy-net
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+
+  # ── DNS Chaff Service ────────────────────────────────────────────────
+  dns-chaff:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: spicy-cat-dns-chaff
+    hostname: dns-worker
+    restart: unless-stopped
+    profiles:
+      - full
+
+    cap_add:
+      - NET_ADMIN
+
+    environment:
+      - SPICY_CAT_MODE=dns-chaff
+      - SPICY_CAT_DNS_CHAFF=true
+      - SPICY_CAT_LOG_LEVEL=INFO
+
+    command: ["python3", "-c", "
+from lib.telemetry_chaos import DNSChaffGenerator;
+import time;
+gen = DNSChaffGenerator();
+gen.start_background(queries_per_burst=5, interval=3.0);
+print('[spicy-cat] DNS chaff generator running...');
+try:
+    while True:
+        time.sleep(30);
+        stats = gen.get_stats();
+        print(f'[dns-chaff] queries={stats[\"total_queries\"]} resolved={stats[\"resolved\"]}')
+except KeyboardInterrupt:
+    gen.stop_background()
+"]
+
+    networks:
+      - spicy-net
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
+  # ── Phantom Device Swarm Service ─────────────────────────────────────
+  phantom-swarm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: spicy-cat-phantom-swarm
+    hostname: phantom-controller
+    restart: unless-stopped
+    profiles:
+      - full
+
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    environment:
+      - SPICY_CAT_MODE=phantom-swarm
+      - SPICY_CAT_PHANTOM_SWARM=true
+      - SPICY_CAT_LOG_LEVEL=INFO
+
+    command: ["python3", "-c", "
+from lib.telemetry_chaos import TelemetryChaosEngine, TelemetryMethod;
+import time;
+engine = TelemetryChaosEngine();
+engine.start_background(interval=5.0, methods=[
+    TelemetryMethod.PHANTOM_SWARM,
+    TelemetryMethod.BEACON_ENTROPY,
+    TelemetryMethod.COOKIE_CHIMERA,
+]);
+print('[spicy-cat] Phantom swarm + beacon entropy running...');
+try:
+    while True:
+        time.sleep(30);
+        stats = engine.get_stats();
+        print(f'[phantom] events={stats[\"total_events\"]}')
+except KeyboardInterrupt:
+    engine.stop_background()
+"]
+
+    networks:
+      - spicy-net
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
+  # ── WiFi Chaos Service ──────────────────────────────────────────────
+  wifi-chaos:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: spicy-cat-wifi-chaos
+    hostname: wifi-phantom
+    restart: unless-stopped
+    profiles:
+      - wifi
+      - full
+
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    # WiFi interface passthrough (requires host network or device mapping)
+    # Uncomment and adjust for your WiFi adapter:
+    # devices:
+    #   - /dev/bus/usb:/dev/bus/usb  # USB WiFi adapter passthrough
+    # network_mode: host  # Required for raw WiFi injection
+
+    environment:
+      - SPICY_CAT_MODE=wifi
+      - SPICY_CAT_LOG_LEVEL=INFO
+
+    command: ["python3", "wifi/spicy-wifi.py", "--mode", "nowhere",
+              "--continuous", "--batch", "--verbose"]
+
+    networks:
+      - spicy-net
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+
+# ── Networks ───────────────────────────────────────────────────────────
+networks:
+  spicy-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: spicy-br0
+
+# ── Volumes ────────────────────────────────────────────────────────────
+volumes:
+  spicy-data:
+    name: spicy-cat-data
+  spicy-logs:
+    name: spicy-cat-logs
