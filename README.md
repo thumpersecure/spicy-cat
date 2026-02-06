@@ -25,11 +25,13 @@
 <a href="#-installation"><img src="https://img.shields.io/badge/Python-3.8+-FF6B6B?style=for-the-badge&logo=python&logoColor=white&labelColor=4B8BBE" alt="Python"/></a>
 <a href="#license"><img src="https://img.shields.io/badge/License-MIT-6BCB77?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=2d572c" alt="License"/></a>
 <a href="#-installation"><img src="https://img.shields.io/badge/Platform-Linux-FFD93D?style=for-the-badge&logo=linux&logoColor=white&labelColor=f5a623" alt="Platform"/></a>
+<a href="#-docker-version-new-in-v11"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white&labelColor=1D63ED" alt="Docker"/></a>
+<a href="#-wifi-version-new-in-v11"><img src="https://img.shields.io/badge/WiFi-Chaos-FF4500?style=for-the-badge&logo=wifi&logoColor=white&labelColor=CC3700" alt="WiFi"/></a>
 <a href="#"><img src="https://img.shields.io/badge/🐱_Cats-Approved-C780FA?style=for-the-badge&labelColor=9B59B6" alt="Cats Approved"/></a>
 
 <br><br>
 
-[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Usage](#-usage) • [How It Works](#-how-it-works) • [FAQ](#-faq)
+[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Usage](#-usage) • [Docker](#-docker-version-new-in-v11) • [WiFi](#-wifi-version-new-in-v11) • [How It Works](#-how-it-works) • [FAQ](#-faq)
 
 </div>
 
@@ -52,6 +54,10 @@ git clone https://github.com/yourrepo/spicy-cat.git && cd spicy-cat && ./spicy-c
 | ✍️ **Anti-stylometry** | 9 writing styles to prevent writing fingerprinting |
 | 🦊 **Anonymous browsing** | Firefox profiles with Tor integration |
 | 📊 **Live dashboard** | Monitor your current identity with cat animations |
+| 🐳 **Docker privacy container** | Full fingerprint protection in isolated containers |
+| 📡 **WiFi AP confusion** | 3 modes: nowhere, targeted, mimic - confuse WiFi trackers |
+| 🤖 **Agentic protection** | Autonomous agent adjusts defenses in real-time |
+| 🔀 **10 telemetry methods** | Phantom swarm, DNS chaff, TLS shuffle, and 7 more |
 
 ## ❌ What This Doesn't Do
 
@@ -537,13 +543,187 @@ Yes! Pull requests welcome. Areas of interest:
 
 ---
 
+## 🐳 Docker Version (NEW in v1.1)
+
+Run spicy-cat in a Docker container with **complete advanced fingerprinting protection** and **10 telemetry confusion methods**.
+
+### Quick Start
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+### What Docker Adds
+
+| Feature | Description |
+|---------|-------------|
+| **15-Vector Fingerprint Protection** | Canvas, WebGL, AudioContext, fonts, screen, navigator, WebRTC, timezone, battery, hardware, memory, plugins, TCP/IP, TLS/JA3, HTTP headers |
+| **TCP/IP Stack Normalization** | iptables + sysctl rules make container look like any OS |
+| **10 Telemetry Confusion Methods** | Phantom device swarm, temporal drift, geo carousel, DNS chaff, beacon entropy, TLS shuffler, cookie chimera, UA metamorph, referrer fabricator, feedback loop |
+| **Agentic Real-Time Protection** | Autonomous agent detects fingerprinting attempts and dynamically adjusts defenses |
+| **Auto-Rotating Profiles** | Fingerprint profiles rotate on chaotic intervals |
+
+### Docker Services
+
+```bash
+# All services (main + DNS chaff + phantom swarm + WiFi)
+docker-compose --profile full up -d
+
+# WiFi chaos only
+docker-compose --profile wifi up -d
+
+# Main container only
+docker-compose up -d spicy-cat
+```
+
+### 10 Telemetry Confusion Methods
+
+| # | Method | Description |
+|---|--------|-------------|
+| 1 | **Phantom Device Swarm** | Broadcast as IoT devices, smart TVs, consoles on WiFi |
+| 2 | **Temporal Drift Engine** | Chaotically skew timestamps to break session correlation |
+| 3 | **Geolocation Carousel** | Rotate through plausible GPS coordinates per request |
+| 4 | **DNS Chaff Generator** | Flood DNS with realistic decoy domain lookups |
+| 5 | **Beacon Entropy Mixer** | Inject noise into WiFi probe request patterns |
+| 6 | **TLS Handshake Shuffler** | Vary JA3 fingerprints per connection |
+| 7 | **HTTP Cookie Chimera** | Generate contradictory tracking cookies |
+| 8 | **User-Agent Metamorph** | Morph UA strings organically mid-session |
+| 9 | **Referrer Chain Fabricator** | Create fake browsing history trails |
+| 10 | **Telemetry Feedback Loop** | Send corrupted data back to collectors |
+
+### Agentic Protection
+
+The protection agent autonomously:
+- Monitors for fingerprinting attempts (canvas, WebGL, audio, font probing)
+- Detects known tracker domains and telemetry beacons
+- Evaluates threat level: **CALM** → **ELEVATED** → **HIGH** → **CRITICAL**
+- Dynamically activates more methods as threats increase
+- Rotates fingerprint profiles on chaotic (Lorenz attractor) intervals
+
+```
+Threat: CALM       → DNS chaff only, rotate every 60min
+Threat: ELEVATED   → +cookies +UA morph +temporal drift, rotate every 30min
+Threat: HIGH       → +phantom swarm +TLS shuffle +referrers, rotate every 10min
+Threat: CRITICAL   → ALL 10 methods active, rotate every 2min
+```
+
+---
+
+## 📡 WiFi Version (NEW in v1.1)
+
+**spicy-wifi** - A WiFi AP confusion tool with three operation modes.
+
+### Quick Start
+
+```bash
+python3 wifi/spicy-wifi.py                    # Interactive mode
+python3 wifi/spicy-wifi.py --mode nowhere     # Broadcast to nowhere
+python3 wifi/spicy-wifi.py --mode targeted    # Target specific AP
+python3 wifi/spicy-wifi.py --mode mimic       # Mimic a device
+```
+
+### Three Modes
+
+| Mode | Description |
+|------|-------------|
+| **1) Nowhere** | Broadcast probe requests to random non-existent APs, creating WiFi noise |
+| **2) Targeted** | Send crafted traffic to a specific AP (BSSID), spoofing many device sources |
+| **3) Mimic** | Send traffic as a specific device (iPhone, Galaxy, MacBook, IoT, etc.) |
+
+### News-Powered Content
+
+Traffic payloads use real news categories for realistic content:
+
+| Category | Description |
+|----------|-------------|
+| World | International news and global events |
+| Technology | Tech industry, gadgets, and software |
+| Science | Scientific discoveries and research |
+| Business | Markets, economy, and corporate news |
+| Sports | Sports scores, transfers, and events |
+| Entertainment | Movies, music, TV, and celebrity |
+| Health | Medical research and public health |
+| Politics | Government, policy, and elections |
+| Environment | Climate and sustainability |
+| Education | Schools, universities, and learning |
+
+```bash
+# List categories
+python3 wifi/spicy-wifi.py --list-categories
+
+# List mimicable devices (10 profiles)
+python3 wifi/spicy-wifi.py --list-devices
+
+# Continuous mimic as iPhone with tech + science news
+python3 wifi/spicy-wifi.py --mode mimic --device "iPhone" \
+    --categories "2,3" --continuous
+
+# Targeted with all news categories
+python3 wifi/spicy-wifi.py --mode targeted \
+    --bssid AA:BB:CC:DD:EE:FF --ssid "TargetNet" --continuous
+```
+
+> **Note**: Real WiFi frame injection requires `scapy` and a monitor-mode interface.
+> Without these, spicy-wifi runs in simulation mode (useful for testing/development).
+
+---
+
 ## 🗺️ Roadmap
 
-- [ ] **v1.1** - Chromium/Chrome profile support
-- [ ] **v1.2** - Social media persona templates
-- [ ] **v1.3** - Profile photo generation (AI)
-- [ ] **v1.4** - Keyboard timing simulation
+- [x] **v1.1** - Docker version with fingerprint protection + WiFi tools
+- [ ] **v1.2** - Chromium/Chrome profile support
+- [ ] **v1.3** - Social media persona templates
+- [ ] **v1.4** - Profile photo generation (AI)
+- [ ] **v1.5** - Keyboard timing simulation
 - [ ] **v2.0** - GUI application
+
+---
+
+## 📜 Release Notes
+
+### v1.1.0 "Silent Paws" (Latest)
+
+**Docker Version:**
+- Complete Docker containerization with docker-compose
+- 15-vector advanced fingerprint protection (canvas, WebGL, audio, fonts, screen, navigator, WebRTC, timezone, battery, hardware, memory, plugins, TCP/IP, TLS/JA3, HTTP headers)
+- TCP/IP stack normalization via iptables and sysctl
+- JavaScript injection script for browser API spoofing
+- Firefox and Chromium configuration generation
+- Health check system for container monitoring
+
+**Telemetry Confusion (10 Methods):**
+- Phantom Device Swarm (16 IoT device profiles)
+- Temporal Drift Engine (Lorenz-based timestamp skewing)
+- Geolocation Carousel (10 metro areas with organic variance)
+- DNS Chaff Generator (50+ domain patterns)
+- Beacon Entropy Mixer (WiFi probe request noise)
+- TLS Handshake Shuffler (JA3 fingerprint randomization)
+- HTTP Cookie Chimera (contradictory tracking cookies)
+- User-Agent Metamorph (organic UA morphing)
+- Referrer Chain Fabricator (fake browsing trails)
+- Telemetry Feedback Loop (corrupted telemetry data)
+
+**Agentic Protection:**
+- Autonomous threat detection and response agent
+- 4-level threat assessment (CALM/ELEVATED/HIGH/CRITICAL)
+- Lorenz attractor-based decision engine
+- Dynamic fingerprint profile rotation
+- Known tracker domain detection (40+ domains)
+- Script content analysis for fingerprinting patterns
+- Docker integration manager with startup scripts
+
+**WiFi AP Confusion Tool:**
+- Three operation modes: Nowhere, Targeted, Mimic
+- 10 device profiles for WiFi mimicry
+- News category system (10 categories) for realistic payloads
+- Online RSS feed collection with offline template fallback
+- Scapy integration for real WiFi frame injection
+- Simulation mode for testing without hardware
+- Interactive and batch operation modes
+
+### v1.0.0 "Curious Whiskers"
+- Initial release with identity generation, chaos engine, browser profiles, dashboard, daemon, and traffic simulation
 
 ---
 

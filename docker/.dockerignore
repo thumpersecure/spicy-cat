@@ -1,0 +1,12 @@
+# spicy-cat Docker ignore
+.git
+.gitignore
+*.md
+cat-pics/
+tests/
+data/
+__pycache__
+*.pyc
+.pytest_cache
+.env
+*.egg-info

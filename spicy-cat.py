@@ -76,8 +76,8 @@ from lib.traffic import (TrafficIssueSimulator, IssueType, ISSUE_DESCRIPTIONS,
 
 
 # Version and metadata
-__version__ = "1.0.0"
-__codename__ = "Curious Whiskers"
+__version__ = "1.1.0"
+__codename__ = "Silent Paws"
 
 
 def print_banner():
