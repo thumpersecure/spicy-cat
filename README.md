@@ -132,7 +132,7 @@ git clone https://github.com/thumpersecure/spicy-cat.git && cd spicy-cat && ./sp
 ### Quick Install (Recommended)
 
 ```bash
-git clone https://github.com/yourrepo/spicy-cat.git
+git clone https://github.com/thumpersecure/spicy-cat.git
 cd spicy-cat
 ./spicy-cat.sh install
 ```
@@ -141,7 +141,7 @@ cd spicy-cat
 
 ```bash
 # Clone
-git clone https://github.com/yourrepo/spicy-cat.git
+git clone https://github.com/thumpersecure/spicy-cat.git
 cd spicy-cat
 
 # Install dependencies
