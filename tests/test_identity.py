@@ -10,7 +10,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from lib.identity import Identity, IdentityVault, generate_seed, quick_identity
+from lib.identity import Identity, IdentityVault, BuiltinDataProvider, generate_seed, quick_identity
 
 
 class TestIdentity:
@@ -93,6 +93,51 @@ class TestIdentity:
         identity = Identity("summary_test")
         summary = identity.summary()
         assert len(summary.strip()) > 0
+
+    def test_apply_drift_uses_default_interest_pool(self):
+        """apply_drift should use builtin interests when none are provided."""
+        identity = Identity("drift_default_pool")
+
+        class DriftSpy:
+            def __init__(self):
+                self.calls = 0
+                self.available = None
+
+            def drift_interest(self, interests, available):
+                self.calls += 1
+                self.available = available
+                return interests
+
+            def drift_location(self, current_city, nearby_cities):
+                return current_city
+
+        spy = DriftSpy()
+        identity.drift = spy
+        identity.apply_drift()
+
+        assert spy.calls == 1
+        assert spy.available == BuiltinDataProvider.INTERESTS
+
+    def test_apply_drift_accepts_empty_interest_pool(self):
+        """Explicit empty interest pool should still call drift logic."""
+        identity = Identity("drift_empty_pool")
+
+        class DriftSpy:
+            def __init__(self):
+                self.available = None
+
+            def drift_interest(self, interests, available):
+                self.available = available
+                return interests
+
+            def drift_location(self, current_city, nearby_cities):
+                return current_city
+
+        spy = DriftSpy()
+        identity.drift = spy
+        identity.apply_drift(available_interests=[])
+
+        assert spy.available == []
 
 
 class TestIdentityVault:

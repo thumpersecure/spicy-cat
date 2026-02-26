@@ -126,6 +126,24 @@ class TestChaoticTimer:
             interval = ct.next_interval(min_factor=0.5, max_factor=2.0)
             assert 50.0 <= interval <= 200.0, f"Interval {interval} outside expected bounds"
 
+    def test_generate_schedule_increasing_and_bounded(self):
+        """Generated schedule should be sorted and stay within requested hours."""
+        ct = ChaoticTimer("schedule_test", base_interval=60.0)
+        schedule = ct.generate_schedule(hours=2)
+
+        assert len(schedule) > 0, "Schedule should include at least one timestamp"
+        assert schedule == sorted(schedule), "Schedule timestamps should be increasing"
+        assert all(0.0 < ts < 2.0 for ts in schedule), "Timestamps should be hour offsets in range"
+
+    def test_generate_schedule_deterministic(self):
+        """Schedules should be deterministic for the same seed."""
+        ct1 = ChaoticTimer("deterministic_schedule", base_interval=60.0)
+        ct2 = ChaoticTimer("deterministic_schedule", base_interval=60.0)
+
+        schedule1 = ct1.generate_schedule(hours=1)
+        schedule2 = ct2.generate_schedule(hours=1)
+        assert schedule1 == schedule2
+
 
 class TestIdentityDrift:
     """Tests for IdentityDrift."""

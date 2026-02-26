@@ -171,7 +171,12 @@ class ChaoticTimer:
 
         return self.base_interval * factor
 
-    def generate_schedule(self, hours: int = 24) -> List[float]:
+    def generate_schedule(
+        self,
+        hours: int = 24,
+        min_factor: float = 0.17,
+        max_factor: float = 2.0
+    ) -> List[float]:
         """
         Generate a day's worth of activity timestamps.
         Returns list of hour offsets (0.0 to hours).
@@ -180,9 +185,9 @@ class ChaoticTimer:
         current = 0.0
 
         while current < hours:
-            # Vary interval between 10 min and 2 hours
-            interval = self.next_interval(0.17, 2.0)
-            current += interval
+            # next_interval returns seconds; convert to hour offsets for schedule output.
+            interval_seconds = self.next_interval(min_factor, max_factor)
+            current += interval_seconds / 3600.0
             if current < hours:
                 timestamps.append(current)
 

@@ -391,11 +391,12 @@ Interests: {', '.join(self.interests[:3])}
 
     def apply_drift(self, available_interests: List[str] = None, nearby_cities: List[str] = None):
         """Apply natural drift to identity over time."""
-        if available_interests:
-            self.interests = self.drift.drift_interest(
-                self.interests,
-                available_interests or BuiltinDataProvider.INTERESTS
-            )
+        interest_pool = (
+            available_interests
+            if available_interests is not None
+            else BuiltinDataProvider.INTERESTS
+        )
+        self.interests = self.drift.drift_interest(self.interests, interest_pool)
         if nearby_cities:
             old_city = self.city
             self.city = self.drift.drift_location(self.city, nearby_cities)
