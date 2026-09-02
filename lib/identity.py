@@ -176,13 +176,14 @@ class Identity:
     Nine lives, nine different people. That's the cat way.
     """
 
-    def __init__(self, seed: str, locale: str = 'en_US'):
+    def __init__(self, seed: str, locale: str = 'en_US', override_name: str = None):
         self.seed = seed
         self.locale = locale
         self.created_at = datetime.now()
         self.chaos = LogisticMap(seed)
         self.lorenz = LorenzAttractor(seed)
         self.drift = IdentityDrift(seed)
+        self.override_name = override_name
 
         # Choose data provider
         if FAKER_AVAILABLE:
@@ -198,9 +199,15 @@ class Identity:
         p = self.provider
 
         # Core identity
-        self.first_name = p.first_name()
-        self.last_name = p.last_name()
-        self.full_name = f"{self.first_name} {self.last_name}"
+        if self.override_name:
+            parts = self.override_name.strip().split(None, 1)
+            self.first_name = parts[0]
+            self.last_name = parts[1] if len(parts) > 1 else ''
+            self.full_name = self.override_name.strip()
+        else:
+            self.first_name = p.first_name()
+            self.last_name = p.last_name()
+            self.full_name = f"{self.first_name} {self.last_name}"
 
         # Location
         city_data = p.city()
@@ -248,17 +255,19 @@ class Identity:
 
     def _generate_email(self) -> str:
         """Generate realistic email based on name."""
-        patterns = [
-            lambda f, l: f"{f.lower()}.{l.lower()}",
-            lambda f, l: f"{f.lower()}{l.lower()}",
-            lambda f, l: f"{f[0].lower()}{l.lower()}",
-            lambda f, l: f"{f.lower()}{l[0].lower()}",
-            lambda f, l: f"{f.lower()}_{l.lower()}",
-            lambda f, l: f"{l.lower()}.{f.lower()}",
-        ]
-
-        pattern = self.chaos.next_choice(patterns)
-        base = pattern(self.first_name, self.last_name)
+        if not self.last_name:
+            base = self.first_name.lower()
+        else:
+            patterns = [
+                lambda f, l: f"{f.lower()}.{l.lower()}",
+                lambda f, l: f"{f.lower()}{l.lower()}",
+                lambda f, l: f"{f[0].lower()}{l.lower()}",
+                lambda f, l: f"{f.lower()}{l[0].lower()}",
+                lambda f, l: f"{f.lower()}_{l.lower()}",
+                lambda f, l: f"{l.lower()}.{f.lower()}",
+            ]
+            pattern = self.chaos.next_choice(patterns)
+            base = pattern(self.first_name, self.last_name)
 
         # Maybe add numbers
         if self.chaos.next() > 0.6:
@@ -271,7 +280,8 @@ class Identity:
         """Generate username for social platforms."""
         patterns = [
             lambda: f"{self.first_name.lower()}{self.chaos.next_int(10, 999)}",
-            lambda: f"{self.first_name.lower()}_{self.last_name.lower()}",
+            lambda: (f"{self.first_name.lower()}_{self.last_name.lower()}"
+                     if self.last_name else f"{self.first_name.lower()}_{self.chaos.next_int(10, 999)}"),
             lambda: f"the_{self.first_name.lower()}",
             lambda: f"{self.interests[0].replace(' ', '')}{self.chaos.next_int(1, 99)}" if self.interests else "user",
             lambda: f"{self.first_name.lower()}{self.birth_date.strftime('%y')}",
@@ -518,13 +528,26 @@ class IdentityVault:
         """Generate and save a new identity."""
         import secrets
         seed = secrets.token_hex(16)
-        identity = Identity(seed, locale)
+        identity = Identity(seed, locale, override_name=name)
 
-        if name is None:
-            name = identity.username
-
-        self.save(identity, name)
+        save_key = name if name else identity.username
+        self.save(identity, save_key)
         return identity
+
+    def get_current(self) -> Optional[str]:
+        """Return the name of the current identity, if one is set."""
+        marker = self.vault_path / '.current'
+        if not marker.exists():
+            return None
+        name = marker.read_text().strip()
+        return name if name and name in self.list_identities() else None
+
+    def set_current(self, name: str) -> bool:
+        """Mark an identity as the current one."""
+        if name not in self.list_identities():
+            return False
+        (self.vault_path / '.current').write_text(name)
+        return True
 
 
 def generate_seed() -> str:

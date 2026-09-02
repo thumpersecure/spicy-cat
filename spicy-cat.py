@@ -96,7 +96,7 @@ def cmd_new(args):
     locale = args.locale or 'en_US'
 
     print(f"{Colors.YELLOW}Generating identity...{Colors.RESET}")
-    identity = Identity(seed, locale)
+    identity = Identity(seed, locale, override_name=args.name)
 
     if args.temp:
         print(f"{Colors.BRIGHT_BLACK}(Ephemeral - not saved){Colors.RESET}")
@@ -104,6 +104,7 @@ def cmd_new(args):
         vault = IdentityVault()
         name = args.name or identity.username
         vault.save(identity, name)
+        vault.set_current(name)
         print(f"{Colors.GREEN}Saved as:{Colors.RESET} {name}")
 
     print()
@@ -128,12 +129,13 @@ def cmd_show(args):
             print(f"{Colors.RED}Identity not found:{Colors.RESET} {args.name}")
             return None
     else:
-        # Show most recent or first available
+        # Show the current identity, falling back to the first available
+        current = vault.get_current()
         identities = vault.list_identities()
         if not identities:
             print(f"{Colors.YELLOW}No identities found. Use 'spicy-cat new' to create one.{Colors.RESET}")
             return None
-        identity = vault.load(identities[0])
+        identity = vault.load(current or identities[0])
 
     print(print_identity_card(identity))
 
@@ -220,17 +222,19 @@ def cmd_rotate(args):
         print(f"{Colors.DIM}Create more with 'spicy-cat new'{Colors.RESET}")
         return None
 
-    # Simple rotation - just pick the next one
-    # In a real scenario, you'd track "current" identity
+    current = vault.get_current()
     print(f"{Colors.YELLOW}Available identities:{Colors.RESET}")
     for i, name in enumerate(identities):
-        print(f"  [{i+1}] {name}")
+        marker = f" {Colors.DIM}(current){Colors.RESET}" if name == current else ""
+        print(f"  [{i+1}] {name}{marker}")
 
     print(f"\n{Colors.CYAN}Select identity number:{Colors.RESET} ", end='')
     try:
         choice = int(input().strip()) - 1
         if 0 <= choice < len(identities):
-            identity = vault.load(identities[choice])
+            name = identities[choice]
+            identity = vault.load(name)
+            vault.set_current(name)
             print(f"\n{Colors.GREEN}Switched to:{Colors.RESET} {identity.full_name}")
             print(print_identity_card(identity))
             return identity
@@ -261,7 +265,7 @@ def cmd_browse(args):
             print(f"{Colors.YELLOW}No identities. Creating temporary one...{Colors.RESET}")
             identity = quick_identity()
         else:
-            identity = vault.load(identities[0])
+            identity = vault.load(vault.get_current() or identities[0])
 
     # Tor check
     if args.tor:
